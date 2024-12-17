@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP8266 控制面板</title>
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+      margin: 0;
+    }
+    h1 {
+      color: #333;
+      margin-top: 20px;
+    }
+    p {
+      font-size: 1.2em;
+      color: #555;
+    }
+    .buttons {
+      margin-top: 20px;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>ESP8266 控制面板</h1>
+  <p id="status">状态：未连接</p>
+  <p id="sensor">传感器数据：---</p>
+
+  <div class="buttons">
+    <button onclick="connectESP()">连接 ESP8266</button>
+    <button onclick="sendCommand('TEMP')">切换温度报警</button>
+    <button onclick="sendCommand('HUMI')">切换湿度报警</button>
+    <button onclick="sendCommand('SMOKE')">切换烟雾报警</button>
+  </div>
+
+  <script>
+    let socket;
+    const statusEl = document.getElementById("status");
+    const sensorEl = document.getElementById("sensor");
+
+    // 连接 ESP8266 WebSocket 服务
+    function connectESP() {
+      const espIP = prompt("请输入 ESP8266 的 WebSocket 地址：", "ws://192.168.4.1:81");
+      if (!espIP) return;
+
+      socket = new WebSocket(espIP);
+
+      socket.onopen = () => {
+        statusEl.innerText = "状态：已连接";
+        alert("成功连接到 ESP8266");
+      };
+
+      socket.onmessage = (event) => {
+        sensorEl.innerText = `传感器数据：${event.data}`;
+      };
+
+      socket.onerror = () => {
+        statusEl.innerText = "状态：连接错误";
+        alert("连接失败，请检查 ESP8266 是否在线");
+      };
+
+      socket.onclose = () => {
+        statusEl.innerText = "状态：未连接";
+        alert("ESP8266 连接已关闭");
+      };
+    }
+
+    // 发送指令到 ESP8266
+    function sendCommand(command) {
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        alert("请先连接到 ESP8266");
+        return;
+      }
+      socket.send(command);
+      alert(`指令已发送：${command}`);
+    }
+  </script>
+</body>
+</html>
